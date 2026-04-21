@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Báo cáo phổ điểm</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="container wide">
+      <h1>Báo cáo phổ điểm theo môn</h1>
+      <a href="/">← Quay lại trang chủ</a>
+      <canvas id="reportChart"></canvas>
+    </div>
+
+    <script>
+      const report = {{ report | tojson }};
+      const labels = Object.keys(report);
+      const ge8 = labels.map((s) => report[s].ge_8);
+      const ge6lt8 = labels.map((s) => report[s].ge_6_lt_8);
+      const ge4lt6 = labels.map((s) => report[s].ge_4_lt_6);
+      const lt4 = labels.map((s) => report[s].lt_4);
+
+      const ctx = document.getElementById('reportChart');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: '>= 8', data: ge8 },
+            { label: '6 - <8', data: ge6lt8 },
+            { label: '4 - <6', data: ge4lt6 },
+            { label: '< 4', data: lt4 },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { x: { stacked: true }, y: { stacked: true } }
+        }
+      });
+    </script>
+  </body>
+</html>
