@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>G-Scores</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>G-Scores</h1>
+      <p>Tra cứu điểm thi THPT 2024 theo số báo danh</p>
+      <nav>
+        <a href="/report">Xem báo cáo phổ điểm</a>
+        <a href="/top10-group-a">Top 10 khối A</a>
+      </nav>
+
+      <form id="lookup-form">
+        <input id="sbd" name="sbd" placeholder="Nhập SBD (vd: 01000001)" />
+        <button type="submit">Tra cứu</button>
+      </form>
+
+      <pre id="result">Kết quả sẽ hiển thị ở đây...</pre>
+    </div>
+
+    <script>
+      const form = document.getElementById('lookup-form');
+      const result = document.getElementById('result');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const sbd = document.getElementById('sbd').value.trim();
+        const res = await fetch(`/lookup?sbd=${encodeURIComponent(sbd)}`);
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      });
+    </script>
+  </body>
+</html>

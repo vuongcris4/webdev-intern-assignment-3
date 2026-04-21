@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Top 10 khối A</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="container wide">
+      <h1>Top 10 thí sinh khối A (Toán, Lý, Hóa)</h1>
+      <a href="/">← Quay lại trang chủ</a>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>SBD</th>
+            <th>Toán</th>
+            <th>Vật lý</th>
+            <th>Hóa học</th>
+            <th>Tổng</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in top10 %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ row.sbd }}</td>
+            <td>{{ row.toan }}</td>
+            <td>{{ row.vat_li }}</td>
+            <td>{{ row.hoa_hoc }}</td>
+            <td><b>{{ row.total }}</b></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

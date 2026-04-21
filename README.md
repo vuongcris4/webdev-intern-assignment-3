@@ -1,65 +1,73 @@
-# G-Scores
+# G-Scores - Web Intern Assignment Implementation
 
-This is the instruction for web developer intern assignment at [Golden Owl](https://goldenowl.asia). You will build a simple web.
+Ứng dụng web tra cứu điểm thi THPT 2024, thống kê phổ điểm theo môn, và hiển thị top 10 thí sinh khối A.
 
-Web template example. Hope you will make it more beautiful !!!
+## Tính năng đã làm
 
-![template example](./screenshots/mockup-ui.png) 
-# Requirements
-1. From the raw data file ([diem_thi_thpt_2024.csv](./dataset/diem_thi_thpt_2024.csv)) save it into the database with the appropriate structure
+### Must have
+- Import dữ liệu CSV `dataset/diem_thi_thpt_2024.csv` vào database SQLite thông qua script seed (`init_db.py`).
+- Tra cứu điểm theo số báo danh (SBD).
+- Báo cáo phổ điểm theo 4 mức cho từng môn:
+  - `>= 8`
+  - `6 - < 8`
+  - `4 - < 6`
+  - `< 4`
+- Top 10 thí sinh khối A (Toán, Vật lý, Hóa học).
 
-2. Your application should have at least features in [Must have](#must-have), things in [Nice to have](#nice-to-have) is optional (but yeah, it's attractive if you have).
+### OOP requirement
+- Logic quản lý môn học và báo cáo được tổ chức qua lớp `SubjectManager` trong `models.py`.
 
-### Must have:
-- The conversion of raw data into the database must be coded and located in this source code. (**hint**: recommend use migration and seeder)
-- Write a feature to check score from registration number input
-- Write a feature report. There will be 4 levels including: >=8 points, 8 points > && >=6 points, 6 points > && >= 4 points, < 4 points
-    - Statistics of the number of students with scores in the above 4 levels by subjects. (Chart)
-- List top 10 students of group A including (math, physics, chemistry)
-### Nice to have:
+## Tech stack
+- Backend: Flask + Flask-SQLAlchemy
+- Database: SQLite
+- Frontend: HTML/CSS + vanilla JS + Chart.js
 
-- Responsive design (look good on all devices: desktops, tablets & mobile phones).
-- Setup project use Docker.
-- Deploy the application to go live.
+## Cấu trúc chính
 
-# Technical Requirements
+- `app.py`: Flask app và các routes.
+- `models.py`: ORM model `StudentScore` + OOP class `SubjectManager`.
+- `init_db.py`: tạo bảng + seed CSV.
+- `templates/`: giao diện.
+- `static/style.css`: styling.
 
-### Frontend
-You can use any front-end library/framework like React, Angular, Vue, ... or just simple things with HTML + CSS + Javascript (JQuery).
-- For JS intern use React you need to have: 
-  * React Hooks
-- Fonts (optional);
-  - [https://fonts.google.com/specimen/Rubik?query=Rubik](https://fonts.google.com/specimen/Rubik?query=Rubik)
-- You can use some available interfaces such as: [AdminLTe](https://adminlte.io/), [TailAdmin](https://tailadmin.com/)...
-  
-### Backend: 
-Choose one of your applied back-end libraries/frameworks: Maybe Laravel(PHP), Ruby on Rails, NestJS (NodeJs), Django (Python), unlimited framework... or a structure that you come up with yourselt. 
-- **Mandatory** use of **OOP programming** for managing subjects.
-- Need form validation and logic tightening.
-- For NodeJs, use TypeScript is a plus.
-- Use ORM for interacting with Database.
-- Database: You can use postgreSQL, Mysql, mongoDB... to manage or cache the data. 
+## Chạy local
 
-### Deployment
-Some providers allow free deployment for the trial version  (note: Maybe some suppliers will update their policies and prices)
+### 1) Tạo môi trường và cài dependencies
 
-- Heroku - https://heroku.com - Deploying Front & Backend
-- Vercel (Zeit) - https://vercel.com - Deploying Front & Backend apps at free of cost
-- Fly - https://fly.io - Deploying Front & Backend apps at free of cost
-- Deta - https://deta.sh - Deploying Node.js and Python apps and APIs. They support most web frameworks like Express, Koa, Flask, and FastAPI. They also provide a very fast and powerful NoSQL database for free.
-- Heliohost - https://heliohost.org - PHP, Ruby on rails, perl, django, java(jsp)
-- `...`
-# Submission
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-After completing the assignment, please push the source code to remote repository (github/gitlab), then send us the link to your repository.
+### 2) Khởi tạo database + seed data
 
-Don't forget to add `README.md` which includes guide to run your project locally and demo link.
+```bash
+python init_db.py
+```
 
+### 3) Chạy ứng dụng
 
-**GOOD LUCK!!!**
+```bash
+python app.py
+```
 
-![Your Code Work](./screenshots/meme.png)
+Mở trình duyệt tại: `http://127.0.0.1:5000`
 
-# Contributors
+## Endpoints
 
-- Edric Cao (from GO)
+- `GET /` - Trang tra cứu điểm
+- `GET /lookup?sbd=<so_bao_danh>` - API tra cứu điểm
+- `GET /report` - Trang báo cáo phổ điểm (chart)
+- `GET /top10-group-a` - Trang top 10 khối A
+
+## Validation
+
+- `sbd` bắt buộc.
+- `sbd` chỉ chấp nhận ký tự số.
+- Không tìm thấy dữ liệu theo SBD trả về `404`.
+
+## Ghi chú
+
+- Dữ liệu điểm trống trong CSV được quy đổi thành `NULL` trong database.
+- Chưa dockerize/deploy trong version này.
