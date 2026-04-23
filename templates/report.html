@@ -1,45 +1,124 @@
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Báo cáo phổ điểm</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body>
-    <div class="container wide">
-      <h1>Báo cáo phổ điểm theo môn</h1>
-      <a href="/">← Quay lại trang chủ</a>
-      <canvas id="reportChart"></canvas>
-    </div>
+{% extends "base.html" %}
+{% set active = "report" %}
 
-    <script>
-      const report = {{ report | tojson }};
-      const labels = Object.keys(report);
-      const ge8 = labels.map((s) => report[s].ge_8);
-      const ge6lt8 = labels.map((s) => report[s].ge_6_lt_8);
-      const ge4lt6 = labels.map((s) => report[s].ge_4_lt_6);
-      const lt4 = labels.map((s) => report[s].lt_4);
+{% block title %}G-Scores — Báo cáo phổ điểm{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+{% endblock %}
 
+{% block content %}
+<h1 class="page-title">📊 Báo cáo phổ điểm theo môn</h1>
+<p class="page-desc">Thống kê số lượng thí sinh theo 4 mức điểm cho từng môn thi THPT 2024</p>
+
+<!-- Loading -->
+<div class="spinner active" id="spinner"></div>
+
+<!-- Stats -->
+<div class="stat-row" id="stat-row" style="display:none;"></div>
+
+<!-- Chart -->
+<div class="card" id="chart-card" style="display:none;">
+  <div class="chart-wrap">
+    <canvas id="reportChart"></canvas>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const COLORS = {
+    ge_8:      { bg: 'rgba(16,185,129,0.8)',  border: '#10b981' },
+    ge_6_lt_8: { bg: 'rgba(245,158,11,0.8)',  border: '#f59e0b' },
+    ge_4_lt_6: { bg: 'rgba(59,130,246,0.8)',  border: '#3b82f6' },
+    lt_4:      { bg: 'rgba(239,68,68,0.8)',   border: '#ef4444' }
+  };
+
+  async function loadReport() {
+    const spinner = document.getElementById('spinner');
+    const statRow = document.getElementById('stat-row');
+    const chartCard = document.getElementById('chart-card');
+
+    try {
+      const res = await fetch('/api/report');
+      const report = await res.json();
+
+      const subjects = Object.keys(report);
+      const labels = subjects.map(s => report[s].display_name);
+
+      // Calc stats
+      let totalStudents = 0, totalGe8 = 0;
+      subjects.forEach(s => {
+        const r = report[s];
+        const subTotal = r.ge_8 + r.ge_6_lt_8 + r.ge_4_lt_6 + r.lt_4;
+        if (subTotal > totalStudents) totalStudents = subTotal;
+        totalGe8 += r.ge_8;
+      });
+
+      statRow.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${totalStudents.toLocaleString()}</div>
+          <div class="stat-label">Tổng thí sinh</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${subjects.length}</div>
+          <div class="stat-label">Số môn thi</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${totalGe8.toLocaleString()}</div>
+          <div class="stat-label">Lượt điểm ≥ 8</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">4</div>
+          <div class="stat-label">Mức phân loại</div>
+        </div>
+      `;
+
+      // Build chart
       const ctx = document.getElementById('reportChart');
       new Chart(ctx, {
         type: 'bar',
         data: {
           labels,
           datasets: [
-            { label: '>= 8', data: ge8 },
-            { label: '6 - <8', data: ge6lt8 },
-            { label: '4 - <6', data: ge4lt6 },
-            { label: '< 4', data: lt4 },
-          ],
+            { label: '≥ 8 điểm',    data: subjects.map(s => report[s].ge_8),      backgroundColor: COLORS.ge_8.bg,      borderColor: COLORS.ge_8.border,      borderWidth: 1 },
+            { label: '6 — <8 điểm', data: subjects.map(s => report[s].ge_6_lt_8), backgroundColor: COLORS.ge_6_lt_8.bg, borderColor: COLORS.ge_6_lt_8.border, borderWidth: 1 },
+            { label: '4 — <6 điểm', data: subjects.map(s => report[s].ge_4_lt_6), backgroundColor: COLORS.ge_4_lt_6.bg, borderColor: COLORS.ge_4_lt_6.border, borderWidth: 1 },
+            { label: '< 4 điểm',    data: subjects.map(s => report[s].lt_4),      backgroundColor: COLORS.lt_4.bg,      borderColor: COLORS.lt_4.border,      borderWidth: 1 }
+          ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { position: 'top' } },
-          scales: { x: { stacked: true }, y: { stacked: true } }
+          maintainAspectRatio: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { font: { family: "'Rubik'", size: 13 }, usePointStyle: true, pointStyle: 'rectRounded' } },
+            tooltip: {
+              backgroundColor: 'rgba(30,41,59,0.95)',
+              titleFont: { family: "'Rubik'" },
+              bodyFont: { family: "'Rubik'" },
+              padding: 12,
+              cornerRadius: 8,
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} thí sinh`
+              }
+            }
+          },
+          scales: {
+            x: { stacked: true, grid: { display: false }, ticks: { font: { family: "'Rubik'", size: 12 } } },
+            y: { stacked: true, ticks: { font: { family: "'Rubik'" }, callback: v => v.toLocaleString() }, grid: { color: 'rgba(0,0,0,0.05)' } }
+          }
         }
       });
-    </script>
-  </body>
-</html>
+
+      spinner.classList.remove('active');
+      statRow.style.display = '';
+      chartCard.style.display = '';
+    } catch (err) {
+      spinner.classList.remove('active');
+      document.querySelector('.content').innerHTML += '<div class="card"><div class="empty-state"><div class="icon">⚠️</div><p>Lỗi tải dữ liệu báo cáo</p></div></div>';
+    }
+  }
+
+  loadReport();
+</script>
+{% endblock %}

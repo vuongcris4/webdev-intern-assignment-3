@@ -1,39 +1,137 @@
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>G-Scores</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  </head>
-  <body>
-    <div class="container">
-      <h1>G-Scores</h1>
-      <p>Tra cứu điểm thi THPT 2024 theo số báo danh</p>
-      <nav>
-        <a href="/report">Xem báo cáo phổ điểm</a>
-        <a href="/top10-group-a">Top 10 khối A</a>
-      </nav>
+{% extends "base.html" %}
+{% set active = "search" %}
 
-      <form id="lookup-form">
-        <input id="sbd" name="sbd" placeholder="Nhập SBD (vd: 01000001)" />
-        <button type="submit">Tra cứu</button>
-      </form>
+{% block title %}G-Scores — Tra cứu điểm{% endblock %}
 
-      <pre id="result">Kết quả sẽ hiển thị ở đây...</pre>
-    </div>
+{% block content %}
+<!-- Search Card -->
+<div class="card">
+  <h2 class="card-title">Tra cứu điểm thi</h2>
+  <p class="card-subtitle">Nhập số báo danh để xem kết quả thi THPT Quốc gia 2024</p>
 
-    <script>
-      const form = document.getElementById('lookup-form');
-      const result = document.getElementById('result');
+  <form class="search-form" id="lookup-form">
+    <input
+      class="search-input"
+      id="sbd-input"
+      name="sbd"
+      type="text"
+      inputmode="numeric"
+      placeholder="Nhập số báo danh (VD: 01000001)"
+      autocomplete="off"
+      maxlength="20"
+    />
+    <button class="btn" type="submit" id="submit-btn">Tra cứu</button>
+  </form>
+  <div class="error-msg" id="error-msg"></div>
+</div>
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const sbd = document.getElementById('sbd').value.trim();
-        const res = await fetch(`/lookup?sbd=${encodeURIComponent(sbd)}`);
-        const data = await res.json();
-        result.textContent = JSON.stringify(data, null, 2);
-      });
-    </script>
-  </body>
-</html>
+<!-- Loading Spinner -->
+<div class="spinner" id="spinner"></div>
+
+<!-- Result Card -->
+<div class="card" id="result-card" style="display:none;">
+  <h2 class="card-title">Kết quả chi tiết</h2>
+  <p class="card-subtitle" id="result-sbd"></p>
+  <div class="score-grid" id="score-grid"></div>
+</div>
+
+<!-- Empty State -->
+<div class="card" id="empty-card">
+  <div class="empty-state">
+    <div class="icon">📝</div>
+    <p>Nhập số báo danh phía trên để tra cứu điểm thi</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const SUBJECT_NAMES = {
+    toan: 'Toán', ngu_van: 'Ngữ văn', ngoai_ngu: 'Ngoại ngữ',
+    vat_li: 'Vật lý', hoa_hoc: 'Hóa học', sinh_hoc: 'Sinh học',
+    lich_su: 'Lịch sử', dia_li: 'Địa lý', gdcd: 'GDCD'
+  };
+
+  const form = document.getElementById('lookup-form');
+  const sbdInput = document.getElementById('sbd-input');
+  const errorMsg = document.getElementById('error-msg');
+  const spinner = document.getElementById('spinner');
+  const resultCard = document.getElementById('result-card');
+  const emptyCard = document.getElementById('empty-card');
+  const resultSbd = document.getElementById('result-sbd');
+  const scoreGrid = document.getElementById('score-grid');
+  const submitBtn = document.getElementById('submit-btn');
+
+  function scoreClass(v) {
+    if (v === null || v === undefined) return 'na';
+    if (v >= 8) return 'high';
+    if (v >= 6) return 'mid';
+    return 'low';
+  }
+
+  function clearError() { errorMsg.textContent = ''; sbdInput.classList.remove('error'); }
+
+  sbdInput.addEventListener('input', clearError);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const sbd = sbdInput.value.trim();
+    if (!sbd) {
+      errorMsg.textContent = 'Vui lòng nhập số báo danh.';
+      sbdInput.classList.add('error');
+      sbdInput.focus();
+      return;
+    }
+    if (!/^\d+$/.test(sbd)) {
+      errorMsg.textContent = 'Số báo danh chỉ được chứa chữ số.';
+      sbdInput.classList.add('error');
+      sbdInput.focus();
+      return;
+    }
+
+    // Show loading
+    spinner.classList.add('active');
+    resultCard.style.display = 'none';
+    emptyCard.style.display = 'none';
+    submitBtn.disabled = true;
+
+    try {
+      const res = await fetch(`/api/lookup?sbd=${encodeURIComponent(sbd)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorMsg.textContent = data.error || 'Có lỗi xảy ra.';
+        sbdInput.classList.add('error');
+        emptyCard.style.display = 'block';
+        return;
+      }
+
+      // Build score cards
+      resultSbd.textContent = `Số báo danh: ${data.sbd}${data.ma_ngoai_ngu ? ' — Mã ngoại ngữ: ' + data.ma_ngoai_ngu : ''}`;
+      scoreGrid.innerHTML = '';
+
+      for (const [key, label] of Object.entries(SUBJECT_NAMES)) {
+        const v = data[key];
+        const cls = scoreClass(v);
+        const display = v !== null && v !== undefined ? v : '—';
+
+        scoreGrid.innerHTML += `
+          <div class="score-card">
+            <div class="label">${label}</div>
+            <div class="value ${cls}">${display}</div>
+          </div>
+        `;
+      }
+
+      resultCard.style.display = 'block';
+    } catch (err) {
+      errorMsg.textContent = 'Lỗi kết nối server. Vui lòng thử lại.';
+    } finally {
+      spinner.classList.remove('active');
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+{% endblock %}
