@@ -6,7 +6,8 @@ services:
       - "5000:5000"
     environment:
       DJANGO_DEBUG: "false"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,gscores.dongnama.app"
+      DJANGO_CSRF_TRUSTED_ORIGINS: "https://gscores.dongnama.app"
       GSCORES_AUTO_MIGRATE: "true"
       GSCORES_AUTO_SEED: "true"
     restart: unless-stopped
