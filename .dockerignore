@@ -1,11 +1,10 @@
 .git
+.gitignore
 .venv
-__pycache__
+__pycache__/
 *.pyc
-*.db
-instance/
-*.md
+*.pyo
+*.pyd
+staticfiles/
+g_scores.db
 screenshots/
-.dockerignore
-DE-BAI/
-.gemini/

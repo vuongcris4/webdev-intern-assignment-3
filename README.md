@@ -1,121 +1,106 @@
 # G-Scores — Tra cứu Điểm Thi THPT 2024
 
-> 🌐 **Demo**: [https://gscores.dongnama.app](https://gscores.dongnama.app)
+Ứng dụng web tra cứu điểm thi THPT Quốc gia 2024, thống kê phổ điểm theo môn và xếp hạng top 10 thí sinh khối A.
 
-Ứng dụng web tra cứu điểm thi THPT Quốc gia 2024, thống kê phổ điểm theo môn, và xếp hạng top 10 thí sinh khối A.
+## Giao diện
 
-## 📸 Screenshots
+Project hiện dùng **Django + custom dashboard UI**. Frontend được xây bằng:
+
+- HTML template
+- CSS thuần
+- Vanilla JavaScript
+- Chart.js
+
+Backend đã được chuyển từ Flask sang **Django**. Giao diện được làm lại theo hướng nhẹ hơn, ít phụ thuộc hơn và đồng nhất hơn giữa các trang.
+
+## Screenshots
 
 ### Trang tra cứu điểm
-![Trang chủ - Tra cứu điểm](./screenshots/01-home.png)
+![Trang tra cứu điểm](./screenshots/01-home.png)
 
 ### Kết quả tra cứu
-![Kết quả tra cứu điểm theo SBD](./screenshots/02-search-results.png)
+![Kết quả tra cứu](./screenshots/02-search-results.png)
 
 ### Báo cáo phổ điểm
-![Biểu đồ phổ điểm theo môn](./screenshots/03-report.png)
+![Báo cáo phổ điểm](./screenshots/03-report.png)
 
 ### Top 10 khối A
-![Bảng xếp hạng Top 10 khối A](./screenshots/04-top10.png)
+![Top 10 khối A](./screenshots/04-top10.png)
 
----
+## Tính năng
 
-## ✨ Tính năng
+- Tra cứu điểm theo số báo danh
+- Báo cáo phổ điểm 4 mức theo từng môn
+- Top 10 thí sinh khối A
+- Import CSV vào SQLite
+- API JSON cho frontend
 
-### Must have ✅
-- **Import CSV → Database**: Script `init_db.py` chuyển ~1 triệu bản ghi từ CSV vào SQLite qua ORM (Flask-SQLAlchemy)
-- **Tra cứu điểm theo SBD**: Nhập số báo danh → hiển thị điểm chi tiết tất cả 9 môn dạng score card
-- **Báo cáo phổ điểm**: Biểu đồ stacked bar (Chart.js) thống kê 4 mức (≥8, 6-<8, 4-<6, <4) theo từng môn
-- **Top 10 khối A**: Bảng xếp hạng Toán-Lý-Hóa với rank badges (gold/silver/bronze)
-- **OOP Programming**: Class `Subject` (encapsulation) + `SubjectManager` (composition) quản lý logic môn học
-- **Form validation**: Client-side + server-side validation cho SBD
-
-### Nice to have ✅
-- **Responsive design**: Hỗ trợ Desktop, Tablet, Mobile (sidebar collapse + hamburger menu)
-- **Docker**: Dockerfile + docker-compose.yml
-- **Deploy**: Production deployment tại [https://gscores.dongnama.app](https://gscores.dongnama.app)
-
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Flask 3.1 + Flask-SQLAlchemy |
+| Backend | Django 5.2 |
 | Database | SQLite |
-| Frontend | HTML/CSS + Vanilla JS + Chart.js 4 |
-| Font | Rubik (Google Fonts) |
+| Frontend | Custom UI + HTML/CSS + Vanilla JS + Chart.js 4 |
 | Production | Gunicorn + Docker |
-| Deploy | Docker Compose + Cloudflare Tunnel |
 
-## 📁 Cấu trúc
+## Cấu trúc chính
 
-```
-├── app.py              # Flask app factory + routes (page & API)
-├── models.py           # ORM model + OOP classes (Subject, SubjectManager)
-├── init_db.py          # Database seed script (batch insert ~1M rows)
-├── wsgi.py             # WSGI entry point cho Gunicorn
-├── deploy.sh           # One-command deploy script
-├── requirements.txt    # Python dependencies
-├── Dockerfile          # Docker image
-├── docker-compose.yml  # Docker Compose config
-├── templates/
-│   ├── base.html       # Base layout (header + sidebar + content)
-│   ├── index.html      # Trang tra cứu điểm
-│   ├── report.html     # Trang báo cáo phổ điểm (chart)
-│   └── top10.html      # Trang top 10 khối A
-├── static/
-│   └── style.css       # Design system (glassmorphism, responsive)
-└── dataset/            # Dataset CSV (not tracked in git)
+```text
+├── config/                         # Django project settings/urls/wsgi
+├── scores/                         # Django app: models, views, services, urls
+├── templates/                      # Django templates
+├── static/                         # Static assets
+├── dataset/                        # CSV dataset (không track git)
+├── manage.py                       # Django CLI entrypoint
+├── init_db.py                      # Wrapper migrate + seed để tương thích command cũ
+├── deploy/                         # entrypoint + gunicorn config
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
 ```
 
-## 🚀 Chạy Local
+## Chạy local
 
-### 1) Tạo môi trường và cài dependencies
+### 1) Cài dependencies
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate   # Linux/Mac
-# .venv\Scripts\activate    # Windows
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2) Tải dataset
+### 2) Chuẩn bị dataset
 
-Tải file `diem_thi_thpt_2024.csv` từ [đề bài gốc](https://github.com/nicestrudoc/webdev-intern-assignment/tree/main/dataset) và đặt vào thư mục `dataset/`:
+Tải file `diem_thi_thpt_2024.csv` và đặt vào `dataset/diem_thi_thpt_2024.csv`.
+
+### 3) Migrate database
 
 ```bash
-mkdir -p dataset
-# Đặt file diem_thi_thpt_2024.csv vào thư mục dataset/
+python manage.py migrate
 ```
 
-### 3) Khởi tạo database + seed data
+### 4) Import dữ liệu
+
+```bash
+python manage.py seed_scores --reset
+```
+
+Hoặc giữ tương thích command cũ:
 
 ```bash
 python init_db.py
 ```
 
-> ⏳ Quá trình import ~1 triệu bản ghi mất khoảng 30-60 giây.
-
-### 4) Chạy ứng dụng
+### 5) Chạy server
 
 ```bash
-python app.py
+python manage.py runserver
 ```
 
-Mở trình duyệt tại: `http://127.0.0.1:5000`
+Mở `http://127.0.0.1:8000`
 
-## 🐳 Chạy với Docker
-
-```bash
-# Build và chạy
-docker compose up --build -d
-
-# Hoặc dùng script deploy
-./deploy.sh
-```
-
-Mở trình duyệt tại: `http://localhost:5000`
-
-## 📡 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
@@ -123,42 +108,42 @@ Mở trình duyệt tại: `http://localhost:5000`
 | `GET` | `/report` | Trang báo cáo phổ điểm |
 | `GET` | `/top10-group-a` | Trang top 10 khối A |
 | `GET` | `/api/lookup?sbd=<sbd>` | API tra cứu điểm theo SBD |
-| `GET` | `/api/report` | API dữ liệu phổ điểm (JSON) |
-| `GET` | `/api/top10` | API top 10 khối A (JSON) |
+| `GET` | `/api/report` | API dữ liệu phổ điểm |
+| `GET` | `/api/top10` | API top 10 khối A |
 
-## ✅ Validation
+## Docker
 
-- `sbd` bắt buộc nhập
-- `sbd` chỉ chấp nhận ký tự số (client + server validation)
-- `sbd` giới hạn tối đa 20 ký tự
-- Không tìm thấy → trả về lỗi 404 với message rõ ràng
-- UI hiển thị error message inline (không alert)
-
-## 🏗 OOP Architecture
-
-```
-Subject (encapsulation)
-├── column: str           # Tên cột trong DB
-├── display_name: str     # Tên hiển thị tiếng Việt
-├── orm_column: property  # SQLAlchemy column object
-└── count_bands(): dict   # Thống kê 4 mức điểm
-
-SubjectManager (composition)
-├── subjects: List[Subject]    # Danh sách môn học
-├── find_by_sbd()              # Tra cứu theo SBD
-├── build_subject_report()     # Báo cáo phổ điểm (cached)
-└── top10_group_a()            # Top 10 khối A
+```bash
+docker compose up --build -d
 ```
 
-## 📝 Ghi chú kỹ thuật
+Container sẽ:
 
-- Điểm trống trong CSV → `NULL` trong database → hiển thị "—" trên UI
-- SQL-level aggregation cho report (không load toàn bộ 1M rows vào memory)
-- SQL ORDER BY + LIMIT cho top 10 (thay vì Python sort)
-- Batch insert 5000 records/lần khi seed database
-- Report data được cache in-memory (data thi không thay đổi)
-- Database URI configurable qua environment variable `DATABASE_URI`
+- cài dependencies và collect static ở build time
+- chạy `migrate` khi container start
+- tự seed dữ liệu nếu database còn trống và dataset tồn tại
+- serve bằng Gunicorn tại cổng `5000`
 
-## 👤 Author
+### Biến môi trường deploy
 
-Built for [Golden Owl](https://goldenowl.asia) Web Developer Intern Assignment
+| Biến | Mặc định | Mô tả |
+|------|----------|-------|
+| `DJANGO_DEBUG` | `false` trong Docker | Bật/tắt debug |
+| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Danh sách host hợp lệ |
+| `GSCORES_DATASET_PATH` | `dataset/diem_thi_thpt_2024.csv` | Đường dẫn file CSV |
+| `GSCORES_AUTO_MIGRATE` | `true` | Tự chạy migrate khi start |
+| `GSCORES_AUTO_SEED` | `true` | Tự seed nếu DB đang rỗng |
+
+### Script deploy
+
+```bash
+./deploy.sh
+```
+
+Script sẽ rebuild container, chờ healthcheck HTTP và in log nếu deploy lỗi.
+
+## Ghi chú
+
+- Dữ liệu được import từ `dataset/diem_thi_thpt_2024.csv`
+- ORM sử dụng Django ORM
+- Logic quản lý môn học được tổ chức theo OOP trong `scores/services.py`

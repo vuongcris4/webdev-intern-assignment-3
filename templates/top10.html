@@ -1,31 +1,47 @@
 {% extends "base.html" %}
-{% set active = "top10" %}
-
 {% block title %}G-Scores — Top 10 Khối A{% endblock %}
+{% block page_heading %}Bảng xếp hạng top 10 khối A{% endblock %}
 
 {% block content %}
-<h1 class="page-title">🏆 Top 10 Thí sinh Khối A</h1>
-<p class="page-desc">Xếp hạng theo tổng điểm 3 môn: Toán, Vật lý, Hóa học</p>
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Leaderboard</p>
+    <h2>Xếp hạng thí sinh theo tổng điểm Toán, Vật lý và Hóa học.</h2>
+    <p class="hero-copy">Bảng xếp hạng ưu tiên khả năng đọc nhanh, nổi bật top 3 và giữ bố cục rõ ràng trên màn hình nhỏ.</p>
+  </div>
+  <div class="hero-stat">
+    <span class="hero-stat-label">Tổ hợp</span>
+    <strong>A00</strong>
+    <small>Toán · Vật lý · Hóa học</small>
+  </div>
+</section>
 
-<!-- Loading -->
 <div class="spinner active" id="spinner"></div>
 
-<!-- Table -->
-<div class="card" id="table-card" style="display:none;">
-  <table class="premium-table" id="top10-table">
-    <thead>
-      <tr>
-        <th>Hạng</th>
-        <th>Số báo danh</th>
-        <th>Toán</th>
-        <th>Vật lý</th>
-        <th>Hóa học</th>
-        <th>Tổng điểm</th>
-      </tr>
-    </thead>
-    <tbody id="top10-body"></tbody>
-  </table>
-</div>
+<section class="panel" id="table-card" hidden>
+  <div class="panel-header">
+    <div>
+      <p class="panel-kicker">Ranking</p>
+      <h3>Top 10 thí sinh</h3>
+    </div>
+    <p class="panel-copy">Sắp xếp giảm dần theo tổng điểm 3 môn của khối A.</p>
+  </div>
+  <div class="panel-body table-panel">
+    <table class="premium-table" id="top10-table">
+      <thead>
+        <tr>
+          <th>Hạng</th>
+          <th>Số báo danh</th>
+          <th>Toán</th>
+          <th>Vật lý</th>
+          <th>Hóa học</th>
+          <th>Tổng điểm</th>
+        </tr>
+      </thead>
+      <tbody id="top10-body"></tbody>
+    </table>
+  </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -61,10 +77,10 @@
       }).join('');
 
       spinner.classList.remove('active');
-      tableCard.style.display = '';
+      tableCard.hidden = false;
     } catch (err) {
       spinner.classList.remove('active');
-      document.querySelector('.content').innerHTML += '<div class="card"><div class="empty-state"><div class="icon">⚠️</div><p>Lỗi tải dữ liệu</p></div></div>';
+      document.querySelector('.page-content').innerHTML += '<section class="panel panel-muted"><div class="empty-state"><div class="empty-icon">⚠️</div><h3>Lỗi tải dữ liệu</h3><p>Không thể lấy bảng xếp hạng từ API.</p></div></section>';
     }
   }
 

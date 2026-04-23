@@ -1,28 +1,32 @@
-#!/bin/bash
-# G-Scores Deploy Script
-# Usage: ./deploy.sh
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-echo "🚀 Deploying G-Scores..."
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
+APP_URL="${APP_URL:-http://127.0.0.1:5000/}"
+MAX_ATTEMPTS="${MAX_ATTEMPTS:-20}"
+SLEEP_SECONDS="${SLEEP_SECONDS:-3}"
 
-# Stop old container if running
-docker compose down 2>/dev/null || true
+cd "$ROOT_DIR"
 
-# Build and run
-docker compose up --build -d
+echo "Deploying G-Scores with compose file: $COMPOSE_FILE"
+docker compose -f "$COMPOSE_FILE" down --remove-orphans || true
+docker compose -f "$COMPOSE_FILE" up --build -d
 
-# Wait for health
-echo "⏳ Waiting for container..."
-sleep 3
+echo "Waiting for application health at $APP_URL"
+for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+  status="$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL" || true)"
+  if [ "$status" = "200" ]; then
+    echo "Deployment succeeded on attempt $attempt."
+    docker compose -f "$COMPOSE_FILE" ps
+    exit 0
+  fi
 
-# Verify
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/)
-if [ "$STATUS" = "200" ]; then
-  echo "✅ G-Scores is live at http://localhost:5000"
-  echo "📦 Container: $(docker ps --filter name=gscores --format '{{.Status}}')"
-else
-  echo "❌ Deploy failed (HTTP $STATUS)"
-  docker logs gscores --tail 20
-  exit 1
-fi
+  echo "Attempt $attempt/$MAX_ATTEMPTS returned HTTP ${status:-000}."
+  sleep "$SLEEP_SECONDS"
+done
+
+echo "Deployment failed. Recent container logs:"
+docker compose -f "$COMPOSE_FILE" logs --tail=80
+exit 1

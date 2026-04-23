@@ -1,61 +1,69 @@
 <!doctype html>
 <html lang="vi">
 <head>
+  {% load static %}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="G-Scores — Tra cứu điểm thi THPT Quốc gia 2024, thống kê phổ điểm, top 10 khối A" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
   <title>{% block title %}G-Scores{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" />
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
   {% block head %}{% endblock %}
 </head>
 <body>
-  <div class="layout">
-    <!-- Header -->
-    <header class="header">
-      <button class="hamburger" id="hamburger-btn" aria-label="Toggle menu">☰</button>
-      <span>G-Scores</span>
-    </header>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{% url 'home' %}">
+        <span class="brand-mark">GS</span>
+        <span>
+          <strong>G-Scores</strong>
+          <small>THPT 2024 analytics</small>
+        </span>
+      </a>
 
-    <div class="body-wrap">
-      <!-- Sidebar -->
-      <nav class="sidebar" id="sidebar">
-        <div class="menu-title">Menu</div>
-        <a href="/" class="{% if active == 'search' %}active{% endif %}">
-          <span class="icon">🔍</span> Tra cứu điểm
+      <nav class="nav-panel" aria-label="Điều hướng chính">
+        <a href="{% url 'home' %}" class="nav-link {% if active == 'search' %}active{% endif %}">
+          <i class="fas fa-magnifying-glass"></i>
+          <span>Tra cứu điểm</span>
         </a>
-        <a href="/report" class="{% if active == 'report' %}active{% endif %}">
-          <span class="icon">📊</span> Báo cáo
+        <a href="{% url 'report' %}" class="nav-link {% if active == 'report' %}active{% endif %}">
+          <i class="fas fa-chart-column"></i>
+          <span>Báo cáo phổ điểm</span>
         </a>
-        <a href="/top10-group-a" class="{% if active == 'top10' %}active{% endif %}">
-          <span class="icon">🏆</span> Top 10 Khối A
+        <a href="{% url 'top10' %}" class="nav-link {% if active == 'top10' %}active{% endif %}">
+          <i class="fas fa-trophy"></i>
+          <span>Top 10 khối A</span>
         </a>
       </nav>
 
-      <!-- Overlay for mobile sidebar -->
-      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+      <div class="sidebar-note">
+        <p>Nền tảng tra cứu, báo cáo phổ điểm và bảng xếp hạng cho dữ liệu thi THPT.</p>
+      </div>
+    </aside>
 
-      <!-- Main Content -->
-      <main class="content">
+    <div class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">G-Scores dashboard</p>
+          <h1>{% block page_heading %}Tra cứu và phân tích điểm thi{% endblock %}</h1>
+        </div>
+        <div class="topbar-badge">Django + SQLite + Docker</div>
+      </header>
+
+      <main class="page-content">
         {% block content %}{% endblock %}
       </main>
+
+      <footer class="footer">
+        <span>G-Scores</span>
+        <span>Thiết kế lại theo hướng gọn, rõ và sẵn sàng triển khai.</span>
+      </footer>
     </div>
   </div>
-
-  <script>
-    // Mobile sidebar toggle
-    const hamburger = document.getElementById('hamburger-btn');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-
-    function toggleSidebar() {
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('open');
-    }
-
-    hamburger.addEventListener('click', toggleSidebar);
-    overlay.addEventListener('click', toggleSidebar);
-  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

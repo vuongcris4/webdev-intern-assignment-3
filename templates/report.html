@@ -1,27 +1,43 @@
 {% extends "base.html" %}
-{% set active = "report" %}
-
 {% block title %}G-Scores — Báo cáo phổ điểm{% endblock %}
+{% block page_heading %}Báo cáo phổ điểm theo từng môn{% endblock %}
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 {% endblock %}
 
 {% block content %}
-<h1 class="page-title">📊 Báo cáo phổ điểm theo môn</h1>
-<p class="page-desc">Thống kê số lượng thí sinh theo 4 mức điểm cho từng môn thi THPT 2024</p>
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Phổ điểm</p>
+    <h2>Xem nhanh bức tranh phân bổ điểm theo bốn ngưỡng đánh giá.</h2>
+    <p class="hero-copy">Biểu đồ stacked bar giúp so sánh tương quan giữa các môn mà không cần rời khỏi dashboard.</p>
+  </div>
+  <div class="legend-card">
+    <span><i class="legend-dot success"></i> Từ 8 trở lên</span>
+    <span><i class="legend-dot warning"></i> Từ 6 đến dưới 8</span>
+    <span><i class="legend-dot brand"></i> Từ 4 đến dưới 6</span>
+    <span><i class="legend-dot danger"></i> Dưới 4</span>
+  </div>
+</section>
 
-<!-- Loading -->
 <div class="spinner active" id="spinner"></div>
 
-<!-- Stats -->
-<div class="stat-row" id="stat-row" style="display:none;"></div>
+<div class="stat-row" id="stat-row" hidden></div>
 
-<!-- Chart -->
-<div class="card" id="chart-card" style="display:none;">
-  <div class="chart-wrap">
-    <canvas id="reportChart"></canvas>
+<section class="panel" id="chart-card" hidden>
+  <div class="panel-header">
+    <div>
+      <p class="panel-kicker">Analytics</p>
+      <h3>Biểu đồ phổ điểm</h3>
+    </div>
+    <p class="panel-copy">Dữ liệu được tổng hợp trực tiếp từ SQLite qua Django ORM.</p>
   </div>
-</div>
+  <div class="panel-body">
+    <div class="chart-wrap">
+      <canvas id="reportChart"></canvas>
+    </div>
+  </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -56,66 +72,80 @@
 
       statRow.innerHTML = `
         <div class="stat-card">
-          <div class="stat-value">${totalStudents.toLocaleString()}</div>
-          <div class="stat-label">Tổng thí sinh</div>
+          <div class="stat-icon bg-info"><i class="fas fa-users"></i></div>
+          <div>
+            <div class="stat-value">${totalStudents.toLocaleString()}</div>
+            <div class="stat-label">Tổng thí sinh</div>
+          </div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">${subjects.length}</div>
-          <div class="stat-label">Số môn thi</div>
+          <div class="stat-icon bg-success"><i class="fas fa-book"></i></div>
+          <div>
+            <div class="stat-value">${subjects.length}</div>
+            <div class="stat-label">Số môn thi</div>
+          </div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">${totalGe8.toLocaleString()}</div>
-          <div class="stat-label">Lượt điểm ≥ 8</div>
+          <div class="stat-icon bg-warning"><i class="fas fa-star"></i></div>
+          <div>
+            <div class="stat-value">${totalGe8.toLocaleString()}</div>
+            <div class="stat-label">Lượt điểm ≥ 8</div>
+          </div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">4</div>
-          <div class="stat-label">Mức phân loại</div>
+          <div class="stat-icon bg-danger"><i class="fas fa-layer-group"></i></div>
+          <div>
+            <div class="stat-value">4</div>
+            <div class="stat-label">Mức phân loại</div>
+          </div>
         </div>
       `;
 
-      // Build chart
-      const ctx = document.getElementById('reportChart');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: '≥ 8 điểm',    data: subjects.map(s => report[s].ge_8),      backgroundColor: COLORS.ge_8.bg,      borderColor: COLORS.ge_8.border,      borderWidth: 1 },
-            { label: '6 — <8 điểm', data: subjects.map(s => report[s].ge_6_lt_8), backgroundColor: COLORS.ge_6_lt_8.bg, borderColor: COLORS.ge_6_lt_8.border, borderWidth: 1 },
-            { label: '4 — <6 điểm', data: subjects.map(s => report[s].ge_4_lt_6), backgroundColor: COLORS.ge_4_lt_6.bg, borderColor: COLORS.ge_4_lt_6.border, borderWidth: 1 },
-            { label: '< 4 điểm',    data: subjects.map(s => report[s].lt_4),      backgroundColor: COLORS.lt_4.bg,      borderColor: COLORS.lt_4.border,      borderWidth: 1 }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { position: 'top', labels: { font: { family: "'Rubik'", size: 13 }, usePointStyle: true, pointStyle: 'rectRounded' } },
-            tooltip: {
-              backgroundColor: 'rgba(30,41,59,0.95)',
-              titleFont: { family: "'Rubik'" },
-              bodyFont: { family: "'Rubik'" },
-              padding: 12,
-              cornerRadius: 8,
-              callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} thí sinh`
-              }
-            }
-          },
-          scales: {
-            x: { stacked: true, grid: { display: false }, ticks: { font: { family: "'Rubik'", size: 12 } } },
-            y: { stacked: true, ticks: { font: { family: "'Rubik'" }, callback: v => v.toLocaleString() }, grid: { color: 'rgba(0,0,0,0.05)' } }
-          }
-        }
-      });
-
       spinner.classList.remove('active');
-      statRow.style.display = '';
-      chartCard.style.display = '';
+      statRow.hidden = false;
+      chartCard.hidden = false;
+
+      requestAnimationFrame(() => {
+        const ctx = document.getElementById('reportChart');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: '≥ 8 điểm',    data: subjects.map(s => report[s].ge_8),      backgroundColor: COLORS.ge_8.bg,      borderColor: COLORS.ge_8.border,      borderWidth: 1 },
+              { label: '6 — <8 điểm', data: subjects.map(s => report[s].ge_6_lt_8), backgroundColor: COLORS.ge_6_lt_8.bg, borderColor: COLORS.ge_6_lt_8.border, borderWidth: 1 },
+              { label: '4 — <6 điểm', data: subjects.map(s => report[s].ge_4_lt_6), backgroundColor: COLORS.ge_4_lt_6.bg, borderColor: COLORS.ge_4_lt_6.border, borderWidth: 1 },
+              { label: '< 4 điểm',    data: subjects.map(s => report[s].lt_4),      backgroundColor: COLORS.lt_4.bg,      borderColor: COLORS.lt_4.border,      borderWidth: 1 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { position: 'top', labels: { font: { family: "'Be Vietnam Pro'", size: 13 }, usePointStyle: true, pointStyle: 'rectRounded' } },
+              tooltip: {
+                backgroundColor: 'rgba(30,41,59,0.95)',
+                titleFont: { family: "'Be Vietnam Pro'" },
+                bodyFont: { family: "'Be Vietnam Pro'" },
+                padding: 12,
+                cornerRadius: 8,
+                callbacks: {
+                  label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} thí sinh`
+                }
+              }
+            },
+            scales: {
+              x: { stacked: true, grid: { display: false }, ticks: { font: { family: "'Be Vietnam Pro'", size: 12 } } },
+              y: { stacked: true, ticks: { font: { family: "'Be Vietnam Pro'" }, callback: v => v.toLocaleString() }, grid: { color: 'rgba(15, 23, 42, 0.08)' } }
+            }
+          }
+        });
+      });
     } catch (err) {
       spinner.classList.remove('active');
-      document.querySelector('.content').innerHTML += '<div class="card"><div class="empty-state"><div class="icon">⚠️</div><p>Lỗi tải dữ liệu báo cáo</p></div></div>';
+      document.querySelector('.page-content').innerHTML += '<section class="panel panel-muted"><div class="empty-state"><div class="empty-icon">⚠️</div><h3>Lỗi tải báo cáo</h3><p>Không thể lấy dữ liệu phổ điểm từ API.</p></div></section>';
     }
   }
 

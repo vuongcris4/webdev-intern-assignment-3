@@ -1,47 +1,77 @@
 {% extends "base.html" %}
-{% set active = "search" %}
-
 {% block title %}G-Scores — Tra cứu điểm{% endblock %}
+{% block page_heading %}Tra cứu điểm theo số báo danh{% endblock %}
 
 {% block content %}
-<h1 class="page-title">🔍 Tra cứu điểm thi</h1>
-<p class="page-desc">Nhập số báo danh để xem kết quả thi THPT Quốc gia 2024</p>
-
-<!-- Search Card -->
-<div class="card">
-  <form class="search-form" id="lookup-form">
-    <input
-      class="search-input"
-      id="sbd-input"
-      name="sbd"
-      type="text"
-      inputmode="numeric"
-      placeholder="Nhập số báo danh (VD: 01000001)"
-      autocomplete="off"
-      maxlength="20"
-    />
-    <button class="btn" type="submit" id="submit-btn">Tra cứu</button>
-  </form>
-  <div class="error-msg" id="error-msg"></div>
-</div>
-
-<!-- Loading Spinner -->
-<div class="spinner" id="spinner"></div>
-
-<!-- Result Card -->
-<div class="card" id="result-card" style="display:none;">
-  <h2 class="card-title">Kết quả chi tiết</h2>
-  <p class="card-subtitle" id="result-sbd"></p>
-  <div class="score-grid" id="score-grid"></div>
-</div>
-
-<!-- Empty State -->
-<div class="card" id="empty-card">
-  <div class="empty-state">
-    <div class="icon">📝</div>
-    <p>Nhập số báo danh phía trên để tra cứu điểm thi</p>
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Tra cứu tức thời</p>
+    <h2>Nhập số báo danh để xem toàn bộ điểm thi trong một lần.</h2>
+    <p class="hero-copy">Giao diện tập trung vào tác vụ chính, phản hồi nhanh và hiển thị kết quả rõ ràng trên cả desktop lẫn mobile.</p>
   </div>
-</div>
+  <div class="metric-grid">
+    <article class="metric-card">
+      <span class="metric-label">Bản ghi</span>
+      <strong>{{ total_records|default:0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Môn thi</span>
+      <strong>{{ subject_count }}</strong>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">Khối A hợp lệ</span>
+      <strong>{{ group_a_candidates }}</strong>
+    </article>
+  </div>
+</section>
+
+<section class="panel panel-accent">
+  <div class="panel-header">
+    <div>
+      <p class="panel-kicker">Lookup</p>
+      <h3>Tra cứu cá nhân</h3>
+    </div>
+    <p class="panel-copy">Nhập số báo danh gồm chữ số, ví dụ `01000001`.</p>
+  </div>
+  <div class="panel-body">
+    <form class="search-form" id="lookup-form" novalidate>
+      <input
+        class="search-input"
+        id="sbd-input"
+        name="sbd"
+        type="text"
+        inputmode="numeric"
+        placeholder="Nhập số báo danh (VD: 01000001)"
+        autocomplete="off"
+        maxlength="20"
+      />
+      <button class="button-primary" type="submit" id="submit-btn">Tra cứu</button>
+    </form>
+    <p class="error-msg" id="error-msg" aria-live="polite"></p>
+  </div>
+  <div class="spinner" id="spinner"></div>
+</section>
+
+<section class="panel" id="result-card" hidden>
+  <div class="panel-header">
+    <div>
+      <p class="panel-kicker">Kết quả</p>
+      <h3>Chi tiết điểm thi</h3>
+    </div>
+    <p class="panel-copy" id="result-sbd"></p>
+  </div>
+  <div class="panel-body">
+    <div class="score-grid" id="score-grid"></div>
+  </div>
+</section>
+
+<section class="panel panel-muted" id="empty-card">
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fas fa-file-lines"></i></div>
+    <h3>Sẵn sàng tra cứu</h3>
+    <p>Nhập số báo danh phía trên để xem điểm từng môn và mã ngoại ngữ nếu có.</p>
+  </div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -74,8 +104,7 @@
 
   sbdInput.addEventListener('input', clearError);
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  async function submitLookup() {
     clearError();
 
     const sbd = sbdInput.value.trim();
@@ -94,8 +123,8 @@
 
     // Show loading
     spinner.classList.add('active');
-    resultCard.style.display = 'none';
-    emptyCard.style.display = 'none';
+    resultCard.hidden = true;
+    emptyCard.hidden = true;
     submitBtn.disabled = true;
 
     try {
@@ -105,7 +134,7 @@
       if (!res.ok) {
         errorMsg.textContent = data.error || 'Có lỗi xảy ra.';
         sbdInput.classList.add('error');
-        emptyCard.style.display = 'block';
+        emptyCard.hidden = false;
         return;
       }
 
@@ -126,13 +155,25 @@
         `;
       }
 
-      resultCard.style.display = 'block';
+      resultCard.hidden = false;
     } catch (err) {
       errorMsg.textContent = 'Lỗi kết nối server. Vui lòng thử lại.';
+      emptyCard.hidden = false;
     } finally {
       spinner.classList.remove('active');
       submitBtn.disabled = false;
     }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await submitLookup();
   });
+
+  const presetSbd = new URLSearchParams(window.location.search).get('sbd');
+  if (presetSbd) {
+    sbdInput.value = presetSbd;
+    submitLookup();
+  }
 </script>
 {% endblock %}

@@ -1,19 +1,27 @@
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DJANGO_DEBUG=false \
+    PORT=5000
+
 WORKDIR /app
 
-# Install dependencies first (cache layer)
-COPY requirements.txt .
-RUN pip install --no-cache-dir --no-warn-script-location -r requirements.txt
+RUN adduser --disabled-password --gecos "" appuser
 
-# Copy source code
+COPY requirements.txt .
+RUN pip install --no-warn-script-location -r requirements.txt
+
 COPY . .
 
-# Seed database at build time
-RUN python init_db.py
+RUN chmod +x /app/deploy/entrypoint.sh \
+    && chown -R appuser:appuser /app \
+    && python manage.py collectstatic --noinput
 
-# Production settings
-ENV FLASK_ENV=production
+USER appuser
+
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "wsgi:application"]
+ENTRYPOINT ["/app/deploy/entrypoint.sh"]
+CMD ["gunicorn", "-c", "deploy/gunicorn.conf.py", "config.wsgi:application"]
