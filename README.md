@@ -27,7 +27,7 @@
 - **Tra cứu điểm theo SBD**: Nhập số báo danh → hiển thị điểm chi tiết tất cả 9 môn dạng score card
 - **Báo cáo phổ điểm**: Biểu đồ stacked bar (Chart.js) thống kê 4 mức (≥8, 6-<8, 4-<6, <4) theo từng môn
 - **Top 10 khối A**: Bảng xếp hạng Toán-Lý-Hóa với rank badges (gold/silver/bronze)
-- **OOP Programming**: Class `SubjectManager` quản lý toàn bộ logic môn học
+- **OOP Programming**: Class `Subject` (encapsulation) + `SubjectManager` (composition) quản lý logic môn học
 - **Form validation**: Client-side + server-side validation cho SBD
 
 ### Nice to have ✅
@@ -50,7 +50,7 @@
 
 ```
 ├── app.py              # Flask app factory + routes (page & API)
-├── models.py           # ORM model StudentScore + OOP class SubjectManager
+├── models.py           # ORM model + OOP classes (Subject, SubjectManager)
 ├── init_db.py          # Database seed script (batch insert ~1M rows)
 ├── wsgi.py             # WSGI entry point cho Gunicorn
 ├── deploy.sh           # One-command deploy script
@@ -64,7 +64,7 @@
 │   └── top10.html      # Trang top 10 khối A
 ├── static/
 │   └── style.css       # Design system (glassmorphism, responsive)
-└── screenshots/        # Screenshots cho README
+└── dataset/            # Dataset CSV (not tracked in git)
 ```
 
 ## 🚀 Chạy Local
@@ -78,7 +78,16 @@ source .venv/bin/activate   # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 2) Khởi tạo database + seed data
+### 2) Tải dataset
+
+Tải file `diem_thi_thpt_2024.csv` từ [đề bài gốc](https://github.com/nicestrudoc/webdev-intern-assignment/tree/main/dataset) và đặt vào thư mục `dataset/`:
+
+```bash
+mkdir -p dataset
+# Đặt file diem_thi_thpt_2024.csv vào thư mục dataset/
+```
+
+### 3) Khởi tạo database + seed data
 
 ```bash
 python init_db.py
@@ -86,7 +95,7 @@ python init_db.py
 
 > ⏳ Quá trình import ~1 triệu bản ghi mất khoảng 30-60 giây.
 
-### 3) Chạy ứng dụng
+### 4) Chạy ứng dụng
 
 ```bash
 python app.py
@@ -121,15 +130,34 @@ Mở trình duyệt tại: `http://localhost:5000`
 
 - `sbd` bắt buộc nhập
 - `sbd` chỉ chấp nhận ký tự số (client + server validation)
+- `sbd` giới hạn tối đa 20 ký tự
 - Không tìm thấy → trả về lỗi 404 với message rõ ràng
 - UI hiển thị error message inline (không alert)
 
-## 📝 Ghi chú
+## 🏗 OOP Architecture
+
+```
+Subject (encapsulation)
+├── column: str           # Tên cột trong DB
+├── display_name: str     # Tên hiển thị tiếng Việt
+├── orm_column: property  # SQLAlchemy column object
+└── count_bands(): dict   # Thống kê 4 mức điểm
+
+SubjectManager (composition)
+├── subjects: List[Subject]    # Danh sách môn học
+├── find_by_sbd()              # Tra cứu theo SBD
+├── build_subject_report()     # Báo cáo phổ điểm (cached)
+└── top10_group_a()            # Top 10 khối A
+```
+
+## 📝 Ghi chú kỹ thuật
 
 - Điểm trống trong CSV → `NULL` trong database → hiển thị "—" trên UI
 - SQL-level aggregation cho report (không load toàn bộ 1M rows vào memory)
 - SQL ORDER BY + LIMIT cho top 10 (thay vì Python sort)
 - Batch insert 5000 records/lần khi seed database
+- Report data được cache in-memory (data thi không thay đổi)
+- Database URI configurable qua environment variable `DATABASE_URI`
 
 ## 👤 Author
 

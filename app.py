@@ -1,3 +1,11 @@
+"""G-Scores Flask Application.
+
+A web app for looking up national exam scores, visualizing
+score distributions, and ranking top-performing students.
+"""
+import os
+from pathlib import Path
+
 from flask import Flask, jsonify, render_template, request
 
 from models import SubjectManager, db
@@ -6,9 +14,14 @@ from models import SubjectManager, db
 def create_app() -> Flask:
     """Application factory for the G-Scores Flask app."""
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///g_scores.db"
+
+    # Configuration from environment or defaults
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "DATABASE_URI", "sqlite:///g_scores.db"
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
     db.init_app(app)
     manager = SubjectManager()
 
@@ -50,6 +63,8 @@ def create_app() -> Flask:
             return jsonify({"error": "Vui lòng nhập số báo danh."}), 400
         if not sbd.isdigit():
             return jsonify({"error": "Số báo danh chỉ được chứa chữ số."}), 400
+        if len(sbd) > 20:
+            return jsonify({"error": "Số báo danh không hợp lệ."}), 400
 
         student = manager.find_by_sbd(sbd)
         if not student:
@@ -59,7 +74,10 @@ def create_app() -> Flask:
 
     @app.get("/api/report")
     def api_report():
-        """API: Get score distribution report for all subjects."""
+        """API: Get score distribution report for all subjects.
+
+        Returns cached data since exam scores are static.
+        """
         report = manager.build_subject_report()
         return jsonify(report)
 
@@ -68,13 +86,6 @@ def create_app() -> Flask:
         """API: Get top 10 Group A students."""
         top10 = manager.top10_group_a()
         return jsonify(top10)
-
-    # ── Legacy redirect (backward compat) ────────────────────
-
-    @app.get("/lookup")
-    def lookup_redirect():
-        """Backward-compatible redirect for old lookup endpoint."""
-        return api_lookup()
 
     return app
 

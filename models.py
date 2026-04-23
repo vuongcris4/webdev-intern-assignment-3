@@ -1,6 +1,12 @@
+"""OOP models for G-Scores exam score management.
+
+Demonstrates:
+- Encapsulation: Subject encapsulates column metadata and scoring logic.
+- Composition: SubjectManager manages a collection of Subject objects.
+- Single Responsibility: Each class has one clear purpose.
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional
 
 from flask_sqlalchemy import SQLAlchemy
@@ -44,87 +50,118 @@ class StudentScore(db.Model):
         }
 
 
-@dataclass
-class ScoreBand:
-    """Score distribution for a single subject across 4 bands."""
-    ge_8: int = 0
-    ge_6_lt_8: int = 0
-    ge_4_lt_6: int = 0
-    lt_4: int = 0
+# ── Score Band Constants ─────────────────────────────────────
+BAND_EXCELLENT = "ge_8"       # >= 8
+BAND_GOOD = "ge_6_lt_8"      # 6 — <8
+BAND_AVERAGE = "ge_4_lt_6"   # 4 — <6
+BAND_WEAK = "lt_4"           # < 4
+
+
+class Subject:
+    """Represents a single exam subject with its metadata and scoring logic.
+
+    Encapsulates the column name, display name, and provides methods
+    to query score distributions for this specific subject.
+
+    Attributes:
+        column: Database column name (e.g., 'toan', 'vat_li').
+        display_name: Human-readable Vietnamese name (e.g., 'Toán', 'Vật lý').
+    """
+
+    def __init__(self, column: str, display_name: str) -> None:
+        self.column = column
+        self.display_name = display_name
+
+    @property
+    def orm_column(self):
+        """Get the SQLAlchemy column object for this subject."""
+        return getattr(StudentScore, self.column)
+
+    def count_bands(self) -> dict:
+        """Count students in each of the 4 score bands for this subject.
+
+        Uses SQL CASE expressions for efficient aggregation on 1M+ records
+        without loading data into Python memory.
+
+        Returns:
+            Dict with keys: display_name, ge_8, ge_6_lt_8, ge_4_lt_6, lt_4.
+        """
+        col = self.orm_column
+
+        result = db.session.query(
+            func.count(case((col >= 8, 1))).label(BAND_EXCELLENT),
+            func.count(case((db.and_(col >= 6, col < 8), 1))).label(BAND_GOOD),
+            func.count(case((db.and_(col >= 4, col < 6), 1))).label(BAND_AVERAGE),
+            func.count(case((col < 4, 1))).label(BAND_WEAK),
+        ).filter(col.isnot(None)).first()
+
+        return {
+            "display_name": self.display_name,
+            BAND_EXCELLENT: result.ge_8,
+            BAND_GOOD: result.ge_6_lt_8,
+            BAND_AVERAGE: result.ge_4_lt_6,
+            BAND_WEAK: result.lt_4,
+        }
+
+    def __repr__(self) -> str:
+        return f"Subject(column={self.column!r}, display_name={self.display_name!r})"
 
 
 class SubjectManager:
-    """OOP manager for subject-related analytics and queries.
+    """Manages a collection of Subject objects and provides analytics.
 
-    Encapsulates all business logic for score lookup, reporting,
-    and ranking. Uses SQL-level aggregation for performance on 1M+ records.
+    Demonstrates OOP composition: SubjectManager owns and coordinates
+    multiple Subject instances. All business logic for score lookup,
+    reporting, and ranking is encapsulated here.
+
+    Attributes:
+        subjects: List of all Subject objects.
     """
 
-    SUBJECT_COLUMNS = [
-        "toan",
-        "ngu_van",
-        "ngoai_ngu",
-        "vat_li",
-        "hoa_hoc",
-        "sinh_hoc",
-        "lich_su",
-        "dia_li",
-        "gdcd",
-    ]
+    def __init__(self) -> None:
+        self.subjects: List[Subject] = [
+            Subject("toan", "Toán"),
+            Subject("ngu_van", "Ngữ văn"),
+            Subject("ngoai_ngu", "Ngoại ngữ"),
+            Subject("vat_li", "Vật lý"),
+            Subject("hoa_hoc", "Hóa học"),
+            Subject("sinh_hoc", "Sinh học"),
+            Subject("lich_su", "Lịch sử"),
+            Subject("dia_li", "Địa lý"),
+            Subject("gdcd", "GDCD"),
+        ]
+        self._subject_map: Dict[str, Subject] = {
+            s.column: s for s in self.subjects
+        }
 
-    SUBJECT_DISPLAY_NAMES = {
-        "toan": "Toán",
-        "ngu_van": "Ngữ văn",
-        "ngoai_ngu": "Ngoại ngữ",
-        "vat_li": "Vật lý",
-        "hoa_hoc": "Hóa học",
-        "sinh_hoc": "Sinh học",
-        "lich_su": "Lịch sử",
-        "dia_li": "Địa lý",
-        "gdcd": "GDCD",
-    }
+        # Cache for report data (invalidated on app restart)
+        self._report_cache: Optional[Dict[str, dict]] = None
+
+    def get_subject(self, column_name: str) -> Optional[Subject]:
+        """Look up a Subject by its column name."""
+        return self._subject_map.get(column_name)
 
     def find_by_sbd(self, sbd: str) -> Optional[StudentScore]:
         """Find a student by their registration number (SBD)."""
         return StudentScore.query.filter_by(sbd=sbd).first()
 
-    def _band_for_score(self, value: float) -> str:
-        """Classify a score into one of 4 bands."""
-        if value >= 8:
-            return "ge_8"
-        if value >= 6:
-            return "ge_6_lt_8"
-        if value >= 4:
-            return "ge_4_lt_6"
-        return "lt_4"
-
     def build_subject_report(self) -> Dict[str, dict]:
-        """Build score distribution report for all subjects using SQL aggregation.
+        """Build score distribution report for all subjects.
 
-        Returns a dict mapping subject column name to a dict with band counts
-        and display_name.
+        Delegates to each Subject's count_bands() method (composition).
+        Results are cached since exam data is static.
+
+        Returns:
+            Dict mapping subject column name to band counts + display_name.
         """
-        report: Dict[str, dict] = {}
+        if self._report_cache is not None:
+            return self._report_cache
 
-        for subject in self.SUBJECT_COLUMNS:
-            col = getattr(StudentScore, subject)
+        report = {}
+        for subject in self.subjects:
+            report[subject.column] = subject.count_bands()
 
-            # Use SQL CASE for counting each band — much faster than Python loop
-            result = db.session.query(
-                func.count(case((col >= 8, 1))).label("ge_8"),
-                func.count(case((db.and_(col >= 6, col < 8), 1))).label("ge_6_lt_8"),
-                func.count(case((db.and_(col >= 4, col < 6), 1))).label("ge_4_lt_6"),
-                func.count(case((col < 4, 1))).label("lt_4"),
-            ).filter(col.isnot(None)).first()
-
-            report[subject] = {
-                "display_name": self.SUBJECT_DISPLAY_NAMES[subject],
-                "ge_8": result.ge_8,
-                "ge_6_lt_8": result.ge_6_lt_8,
-                "ge_4_lt_6": result.ge_4_lt_6,
-                "lt_4": result.lt_4,
-            }
-
+        self._report_cache = report
         return report
 
     def top10_group_a(self) -> List[dict]:

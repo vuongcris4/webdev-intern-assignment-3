@@ -2,6 +2,9 @@
 
 Reads the raw CSV dataset and inserts records into SQLite
 using batch inserts for memory efficiency.
+
+Usage:
+    python init_db.py
 """
 import csv
 import sys
@@ -10,22 +13,28 @@ from pathlib import Path
 from app import create_app
 from models import StudentScore, db
 
-CSV_PATH = Path("DE-BAI/dataset/diem_thi_thpt_2024.csv")
+CSV_PATH = Path("dataset/diem_thi_thpt_2024.csv")
 BATCH_SIZE = 5000
 
 
 def parse_float(value: str):
-    """Parse a string to float, returning None for empty/missing values."""
+    """Parse a string to float, returning None for empty/invalid values."""
     value = (value or "").strip()
     if value == "":
         return None
-    return float(value)
+    try:
+        return float(value)
+    except ValueError:
+        return None
 
 
 def seed_data():
     """Seed the database from the CSV file with batch inserts."""
     if not CSV_PATH.exists():
-        raise FileNotFoundError(f"Dataset not found: {CSV_PATH}")
+        raise FileNotFoundError(
+            f"Dataset not found: {CSV_PATH}\n"
+            f"Please place the CSV file at: {CSV_PATH.resolve()}"
+        )
 
     # Count total lines for progress
     total_lines = sum(1 for _ in CSV_PATH.open(encoding="utf-8")) - 1

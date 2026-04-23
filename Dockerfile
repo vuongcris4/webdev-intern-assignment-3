@@ -4,13 +4,10 @@ WORKDIR /app
 
 # Install dependencies first (cache layer)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --no-warn-script-location -r requirements.txt
 
 # Copy source code
 COPY . .
-
-# Copy dataset from DE-BAI into expected path
-RUN mkdir -p DE-BAI/dataset
 
 # Seed database at build time
 RUN python init_db.py

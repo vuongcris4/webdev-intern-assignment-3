@@ -4,11 +4,11 @@
 {% block title %}G-Scores — Tra cứu điểm{% endblock %}
 
 {% block content %}
+<h1 class="page-title">🔍 Tra cứu điểm thi</h1>
+<p class="page-desc">Nhập số báo danh để xem kết quả thi THPT Quốc gia 2024</p>
+
 <!-- Search Card -->
 <div class="card">
-  <h2 class="card-title">Tra cứu điểm thi</h2>
-  <p class="card-subtitle">Nhập số báo danh để xem kết quả thi THPT Quốc gia 2024</p>
-
   <form class="search-form" id="lookup-form">
     <input
       class="search-input"
@@ -66,6 +66,7 @@
     if (v === null || v === undefined) return 'na';
     if (v >= 8) return 'high';
     if (v >= 6) return 'mid';
+    if (v >= 4) return 'mid-low';
     return 'low';
   }
 

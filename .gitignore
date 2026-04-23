@@ -27,7 +27,10 @@ Thumbs.db
 # Docker
 *.log
 
-# Assignment original files (large dataset)
+# Dataset (large CSV — download separately, see README)
+dataset/
+
+# Assignment original files
 DE-BAI/
 
 # Gemini

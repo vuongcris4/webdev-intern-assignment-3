@@ -17,6 +17,7 @@
   --warning: #f59e0b;
   --info: #3b82f6;
   --danger: #ef4444;
+  --mid-low: #fb923c;
   --font: 'Rubik', sans-serif;
   --sidebar-w: 220px;
   --header-h: 64px;
@@ -266,6 +267,7 @@ body {
 
 .score-card .value.high { color: var(--success); }
 .score-card .value.mid { color: var(--warning); }
+.score-card .value.mid-low { color: var(--mid-low); }
 .score-card .value.low { color: var(--danger); }
 .score-card .value.na { color: var(--text-secondary); font-size: 1rem; }
 
