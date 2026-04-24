@@ -106,9 +106,9 @@
     <!-- Sidebar -->
     <div class="drawer-side z-30">
       <label for="sidebar-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
-      <aside class="sidebar-gradient min-h-full w-72 flex flex-col gap-6 p-6 text-white">
+      <aside class="sidebar-gradient min-h-full w-72 flex flex-col gap-6 py-6 text-white">
         <!-- Brand -->
-        <a href="{% url 'home' %}" class="flex items-center gap-3.5 group">
+        <a href="{% url 'home' %}" class="flex items-center gap-3.5 group px-6">
           <span
             class="grid place-items-center w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-400 text-gray-900 font-bold text-sm shrink-0 transition-transform group-hover:scale-105">GS</span>
           <span>
@@ -119,24 +119,24 @@
 
         <!-- Navigation -->
         <nav aria-label="Điều hướng chính">
-          <ul class="menu gap-1 p-0 text-white/80">
+          <ul class="flex flex-col gap-1 text-white/80">
             <li>
               <a href="{% url 'home' %}"
-                class="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-all hover:bg-white/12 hover:text-white hover:translate-x-1 {% if active == 'search' %}bg-white/12 text-white{% endif %}">
+                class="flex items-center gap-3 px-6 py-3 font-medium transition-all hover:bg-white/12 hover:text-white {% if active == 'search' %}bg-white/12 text-white{% endif %}">
                 <i class="fas fa-magnifying-glass w-5 text-center text-sm"></i>
                 <span>Tra cứu điểm</span>
               </a>
             </li>
             <li>
               <a href="{% url 'report' %}"
-                class="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-all hover:bg-white/12 hover:text-white hover:translate-x-1 {% if active == 'report' %}bg-white/12 text-white{% endif %}">
+                class="flex items-center gap-3 px-6 py-3 font-medium transition-all hover:bg-white/12 hover:text-white {% if active == 'report' %}bg-white/12 text-white{% endif %}">
                 <i class="fas fa-chart-column w-5 text-center text-sm"></i>
                 <span>Báo cáo phổ điểm</span>
               </a>
             </li>
             <li>
               <a href="{% url 'top10' %}"
-                class="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-all hover:bg-white/12 hover:text-white hover:translate-x-1 {% if active == 'top10' %}bg-white/12 text-white{% endif %}">
+                class="flex items-center gap-3 px-6 py-3 font-medium transition-all hover:bg-white/12 hover:text-white {% if active == 'top10' %}bg-white/12 text-white{% endif %}">
                 <i class="fas fa-trophy w-5 text-center text-sm"></i>
                 <span>Top 10 khối A</span>
               </a>
@@ -146,7 +146,7 @@
 
         <!-- Sidebar note -->
         <div
-          class="mt-auto p-4 rounded-2xl border border-white/10 bg-white/5 text-white/65 text-sm leading-relaxed hidden lg:block">
+          class="mt-auto mx-6 p-4 rounded-2xl border border-white/10 bg-white/5 text-white/65 text-sm leading-relaxed hidden lg:block">
           <p>Nền tảng tra cứu, báo cáo phổ điểm và bảng xếp hạng cho dữ liệu thi THPT.</p>
         </div>
       </aside>
