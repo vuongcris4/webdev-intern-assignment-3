@@ -3,75 +3,115 @@
 {% block page_heading %}Tra cứu điểm theo số báo danh{% endblock %}
 
 {% block content %}
-<section class="hero-card">
-  <div>
-    <p class="eyebrow">Tra cứu tức thời</p>
-    <h2>Nhập số báo danh để xem toàn bộ điểm thi trong một lần.</h2>
-    <p class="hero-copy">Giao diện tập trung vào tác vụ chính, phản hồi nhanh và hiển thị kết quả rõ ràng trên cả desktop lẫn mobile.</p>
-  </div>
-  <div class="metric-grid">
-    <article class="metric-card">
-      <span class="metric-label">Bản ghi</span>
-      <strong>{{ total_records|default:0 }}</strong>
-    </article>
-    <article class="metric-card">
-      <span class="metric-label">Môn thi</span>
-      <strong>{{ subject_count }}</strong>
-    </article>
-    <article class="metric-card">
-      <span class="metric-label">Khối A hợp lệ</span>
-      <strong>{{ group_a_candidates }}</strong>
-    </article>
-  </div>
-</section>
+<!-- Hero card -->
+<div class="card bg-base-100 shadow-xl animate-fade-in-up overflow-hidden">
+  <div class="card-body p-6 md:p-8 relative">
+    <!-- Decorative accent -->
+    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-accent"></div>
 
-<section class="panel panel-accent">
-  <div class="panel-header">
-    <div>
-      <p class="panel-kicker">Lookup</p>
-      <h3>Tra cứu cá nhân</h3>
+    <!-- Heading -->
+    <div class="mb-5">
+      <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 mb-2 flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-success animate-pulse"></span>
+        Tra cứu tức thời
+      </p>
+      <h2 class="text-xl md:text-2xl font-bold tracking-tight">Nhập số báo danh để xem toàn bộ điểm thi trong một lần.</h2>
     </div>
-    <p class="panel-copy">Nhập số báo danh gồm chữ số, ví dụ `01000001`.</p>
-  </div>
-  <div class="panel-body">
-    <form class="search-form" id="lookup-form" novalidate>
-      <input
-        class="search-input"
-        id="sbd-input"
-        name="sbd"
-        type="text"
-        inputmode="numeric"
-        placeholder="Nhập số báo danh (VD: 01000001)"
-        autocomplete="off"
-        maxlength="20"
-      />
-      <button class="button-primary" type="submit" id="submit-btn">Tra cứu</button>
-    </form>
-    <p class="error-msg" id="error-msg" aria-live="polite"></p>
-  </div>
-  <div class="spinner" id="spinner"></div>
-</section>
 
-<section class="panel" id="result-card" hidden>
-  <div class="panel-header">
-    <div>
-      <p class="panel-kicker">Kết quả</p>
-      <h3>Chi tiết điểm thi</h3>
+    <!-- Stat cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/15 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+        <div class="grid place-items-center w-11 h-11 rounded-xl bg-primary/15 text-primary shrink-0">
+          <i class="fas fa-database text-lg"></i>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 leading-none mb-1">Bản ghi</p>
+          <p class="text-2xl font-extrabold tracking-tight text-primary leading-none">{{ total_records|default:0 }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/15 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+        <div class="grid place-items-center w-11 h-11 rounded-xl bg-secondary/15 text-secondary shrink-0">
+          <i class="fas fa-book-open text-lg"></i>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 leading-none mb-1">Môn thi</p>
+          <p class="text-2xl font-extrabold tracking-tight text-secondary leading-none">{{ subject_count }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/15 p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
+        <div class="grid place-items-center w-11 h-11 rounded-xl bg-accent/15 text-accent shrink-0">
+          <i class="fas fa-trophy text-lg"></i>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 leading-none mb-1">Khối A hợp lệ</p>
+          <p class="text-2xl font-extrabold tracking-tight text-accent leading-none">{{ group_a_candidates }}</p>
+        </div>
+      </div>
     </div>
-    <p class="panel-copy" id="result-sbd"></p>
   </div>
-  <div class="panel-body">
-    <div class="score-grid" id="score-grid"></div>
-  </div>
-</section>
+</div>
 
-<section class="panel panel-muted" id="empty-card">
-  <div class="empty-state">
-    <div class="empty-icon"><i class="fas fa-file-lines"></i></div>
-    <h3>Sẵn sàng tra cứu</h3>
-    <p>Nhập số báo danh phía trên để xem điểm từng môn và mã ngoại ngữ nếu có.</p>
+<!-- Lookup panel -->
+<div class="card bg-base-100 shadow animate-fade-in-up animate-fade-in-up-delay-1">
+  <div class="card-body p-0">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-base-200 px-6 py-5">
+      <div>
+        <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 mb-1">Lookup</p>
+        <h3 class="text-lg font-bold">Tra cứu cá nhân</h3>
+      </div>
+      <p class="text-base-content/60 text-sm">Nhập số báo danh gồm chữ số, ví dụ <code class="badge badge-ghost badge-sm font-mono">01000001</code>.</p>
+    </div>
+    <div class="px-6 py-5">
+      <form class="flex flex-col sm:flex-row gap-3" id="lookup-form" novalidate>
+        <input
+          class="input input-bordered flex-1"
+          id="sbd-input"
+          name="sbd"
+          type="text"
+          inputmode="numeric"
+          placeholder="Nhập số báo danh (VD: 01000001)"
+          autocomplete="off"
+          maxlength="20"
+        />
+        <button class="btn btn-primary shrink-0" type="submit" id="submit-btn">
+          <i class="fas fa-magnifying-glass"></i>
+          Tra cứu
+        </button>
+      </form>
+      <p class="text-error text-sm min-h-[24px] mt-3" id="error-msg" aria-live="polite"></p>
+    </div>
+    <div class="flex justify-center py-4" id="spinner" style="display:none;">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+    </div>
   </div>
-</section>
+</div>
+
+<!-- Result card -->
+<div class="card bg-base-100 shadow animate-fade-in-up" id="result-card" hidden>
+  <div class="card-body p-0">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-base-200 px-6 py-5">
+      <div>
+        <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 mb-1">Kết quả</p>
+        <h3 class="text-lg font-bold">Chi tiết điểm thi</h3>
+      </div>
+      <p class="text-base-content/60 text-sm" id="result-sbd"></p>
+    </div>
+    <div class="px-6 py-5">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" id="score-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Empty state -->
+<div class="card bg-base-100/70 shadow-sm" id="empty-card">
+  <div class="card-body items-center text-center py-10">
+    <div class="grid place-items-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/15 to-warning/10 text-primary text-2xl mb-4">
+      <i class="fas fa-file-lines"></i>
+    </div>
+    <h3 class="text-lg font-bold mb-1">Sẵn sàng tra cứu</h3>
+    <p class="text-base-content/60 text-sm">Nhập số báo danh phía trên để xem điểm từng môn và mã ngoại ngữ nếu có.</p>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -93,14 +133,14 @@
   const submitBtn = document.getElementById('submit-btn');
 
   function scoreClass(v) {
-    if (v === null || v === undefined) return 'na';
-    if (v >= 8) return 'high';
-    if (v >= 6) return 'mid';
-    if (v >= 4) return 'mid-low';
-    return 'low';
+    if (v === null || v === undefined) return 'text-base-content/40';
+    if (v >= 8) return 'text-success';
+    if (v >= 6) return 'text-warning';
+    if (v >= 4) return 'text-orange-500';
+    return 'text-error';
   }
 
-  function clearError() { errorMsg.textContent = ''; sbdInput.classList.remove('error'); }
+  function clearError() { errorMsg.textContent = ''; sbdInput.classList.remove('input-error'); }
 
   sbdInput.addEventListener('input', clearError);
 
@@ -110,19 +150,19 @@
     const sbd = sbdInput.value.trim();
     if (!sbd) {
       errorMsg.textContent = 'Vui lòng nhập số báo danh.';
-      sbdInput.classList.add('error');
+      sbdInput.classList.add('input-error');
       sbdInput.focus();
       return;
     }
     if (!/^\d+$/.test(sbd)) {
       errorMsg.textContent = 'Số báo danh chỉ được chứa chữ số.';
-      sbdInput.classList.add('error');
+      sbdInput.classList.add('input-error');
       sbdInput.focus();
       return;
     }
 
     // Show loading
-    spinner.classList.add('active');
+    spinner.style.display = 'flex';
     resultCard.hidden = true;
     emptyCard.hidden = true;
     submitBtn.disabled = true;
@@ -133,7 +173,7 @@
 
       if (!res.ok) {
         errorMsg.textContent = data.error || 'Có lỗi xảy ra.';
-        sbdInput.classList.add('error');
+        sbdInput.classList.add('input-error');
         emptyCard.hidden = false;
         return;
       }
@@ -148,9 +188,11 @@
         const display = v !== null && v !== undefined ? v : '—';
 
         scoreGrid.innerHTML += `
-          <div class="score-card">
-            <div class="label">${label}</div>
-            <div class="value ${cls}">${display}</div>
+          <div class="card bg-base-200/50 hover:shadow-md transition-all hover:-translate-y-0.5">
+            <div class="card-body p-4 items-center text-center">
+              <div class="text-xs uppercase tracking-wider font-semibold text-base-content/50 mb-1">${label}</div>
+              <div class="text-2xl font-bold ${cls}">${display}</div>
+            </div>
           </div>
         `;
       }
@@ -160,7 +202,7 @@
       errorMsg.textContent = 'Lỗi kết nối server. Vui lòng thử lại.';
       emptyCard.hidden = false;
     } finally {
-      spinner.classList.remove('active');
+      spinner.style.display = 'none';
       submitBtn.disabled = false;
     }
   }

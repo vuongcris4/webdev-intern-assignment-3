@@ -3,45 +3,56 @@
 {% block page_heading %}Bảng xếp hạng top 10 khối A{% endblock %}
 
 {% block content %}
-<section class="hero-card">
-  <div>
-    <p class="eyebrow">Leaderboard</p>
-    <h2>Xếp hạng thí sinh theo tổng điểm Toán, Vật lý và Hóa học.</h2>
-    <p class="hero-copy">Bảng xếp hạng ưu tiên khả năng đọc nhanh, nổi bật top 3 và giữ bố cục rõ ràng trên màn hình nhỏ.</p>
-  </div>
-  <div class="hero-stat">
-    <span class="hero-stat-label">Tổ hợp</span>
-    <strong>A00</strong>
-    <small>Toán · Vật lý · Hóa học</small>
-  </div>
-</section>
-
-<div class="spinner active" id="spinner"></div>
-
-<section class="panel" id="table-card" hidden>
-  <div class="panel-header">
-    <div>
-      <p class="panel-kicker">Ranking</p>
-      <h3>Top 10 thí sinh</h3>
+<!-- Hero card -->
+<div class="card bg-base-100 shadow-xl animate-fade-in-up">
+  <div class="card-body p-6 md:p-8">
+    <div class="flex flex-col lg:flex-row gap-6">
+      <div class="flex-1">
+        <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 mb-2">Leaderboard</p>
+        <h2 class="text-xl md:text-2xl font-bold tracking-tight mb-3">Xếp hạng thí sinh theo tổng điểm Toán, Vật lý và Hóa học.</h2>
+        <p class="text-base-content/60 leading-relaxed">Bảng xếp hạng ưu tiên khả năng đọc nhanh, nổi bật top 3 và giữ bố cục rõ ràng trên màn hình nhỏ.</p>
+      </div>
+      <div class="flex flex-col gap-1 rounded-2xl bg-base-200/50 p-5 shadow-inner">
+        <span class="text-xs uppercase tracking-widest font-semibold text-base-content/50">Tổ hợp</span>
+        <strong class="text-3xl font-bold">A00</strong>
+        <small class="text-base-content/50 text-sm">Toán · Vật lý · Hóa học</small>
+      </div>
     </div>
-    <p class="panel-copy">Sắp xếp giảm dần theo tổng điểm 3 môn của khối A.</p>
   </div>
-  <div class="panel-body table-panel">
-    <table class="premium-table" id="top10-table">
-      <thead>
-        <tr>
-          <th>Hạng</th>
-          <th>Số báo danh</th>
-          <th>Toán</th>
-          <th>Vật lý</th>
-          <th>Hóa học</th>
-          <th>Tổng điểm</th>
-        </tr>
-      </thead>
-      <tbody id="top10-body"></tbody>
-    </table>
+</div>
+
+<!-- Loading spinner -->
+<div class="flex justify-center py-8" id="spinner">
+  <span class="loading loading-spinner loading-lg text-primary"></span>
+</div>
+
+<!-- Table panel -->
+<div class="card bg-base-100 shadow animate-fade-in-up animate-fade-in-up-delay-1" id="table-card" hidden>
+  <div class="card-body p-0">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-base-200 px-6 py-5">
+      <div>
+        <p class="text-xs uppercase tracking-widest font-semibold text-base-content/50 mb-1">Ranking</p>
+        <h3 class="text-lg font-bold">Top 10 thí sinh</h3>
+      </div>
+      <p class="text-base-content/60 text-sm">Sắp xếp giảm dần theo tổng điểm 3 môn của khối A.</p>
+    </div>
+    <div class="px-2 pb-4 overflow-x-auto">
+      <table class="table" id="top10-table">
+        <thead>
+          <tr>
+            <th class="text-xs uppercase tracking-wider">Hạng</th>
+            <th class="text-xs uppercase tracking-wider">Số báo danh</th>
+            <th class="text-xs uppercase tracking-wider">Toán</th>
+            <th class="text-xs uppercase tracking-wider">Vật lý</th>
+            <th class="text-xs uppercase tracking-wider">Hóa học</th>
+            <th class="text-xs uppercase tracking-wider">Tổng điểm</th>
+          </tr>
+        </thead>
+        <tbody id="top10-body"></tbody>
+      </table>
+    </div>
   </div>
-</section>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -57,30 +68,37 @@
 
       tbody.innerHTML = data.map((row, i) => {
         const rank = i + 1;
-        let badgeClass = 'rank-other';
-        if (rank === 1) badgeClass = 'rank-1';
-        else if (rank === 2) badgeClass = 'rank-2';
-        else if (rank === 3) badgeClass = 'rank-3';
-
-        const topRowClass = rank <= 3 ? 'top-row' : '';
+        let badgeClass = 'badge-neutral';
+        let rowBg = '';
+        if (rank === 1) { badgeClass = 'bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 border-0'; rowBg = 'bg-yellow-50'; }
+        else if (rank === 2) { badgeClass = 'bg-gradient-to-r from-slate-300 to-slate-500 text-white border-0'; rowBg = ''; }
+        else if (rank === 3) { badgeClass = 'bg-gradient-to-r from-orange-300 to-orange-600 text-white border-0'; rowBg = ''; }
 
         return `
-          <tr class="${topRowClass}">
-            <td><span class="rank-badge ${badgeClass}">${rank}</span></td>
+          <tr class="${rowBg} hover:bg-primary/5 transition-colors">
+            <td><span class="badge ${badgeClass} font-bold text-sm w-9 h-9">${rank}</span></td>
             <td><strong>${row.sbd}</strong></td>
             <td>${row.toan}</td>
             <td>${row.vat_li}</td>
             <td>${row.hoa_hoc}</td>
-            <td><span class="total-score">${row.total}</span></td>
+            <td><span class="font-extrabold text-primary text-lg">${row.total}</span></td>
           </tr>
         `;
       }).join('');
 
-      spinner.classList.remove('active');
+      spinner.style.display = 'none';
       tableCard.hidden = false;
     } catch (err) {
-      spinner.classList.remove('active');
-      document.querySelector('.page-content').innerHTML += '<section class="panel panel-muted"><div class="empty-state"><div class="empty-icon">⚠️</div><h3>Lỗi tải dữ liệu</h3><p>Không thể lấy bảng xếp hạng từ API.</p></div></section>';
+      spinner.style.display = 'none';
+      document.querySelector('main').innerHTML += `
+        <div class="card bg-base-100/70 shadow-sm">
+          <div class="card-body items-center text-center py-10">
+            <div class="text-4xl mb-4">⚠️</div>
+            <h3 class="text-lg font-bold mb-1">Lỗi tải dữ liệu</h3>
+            <p class="text-base-content/60 text-sm">Không thể lấy bảng xếp hạng từ API.</p>
+          </div>
+        </div>
+      `;
     }
   }
 

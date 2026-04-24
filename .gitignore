@@ -13,6 +13,9 @@ env/
 instance/
 *.db
 
+# Django collectstatic output
+staticfiles/
+
 # IDE
 .vscode/
 .idea/
